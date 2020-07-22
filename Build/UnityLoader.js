@@ -363,10 +363,10 @@ var UnityLoader = UnityLoader || {
         xhr.open("GET", Module.resolveBuildUrl(debugSymbolsUrl));
         xhr.responseType = "arraybuffer";
         xhr.onload = function () {
-          UnityLoader.loadCode(UnityLoader.Compression.decompress(new Uint8Array(xhr.response)), function (id) {
+          UnityLoader.loadCode(Module, UnityLoader.Compression.decompress(new Uint8Array(xhr.response)), function (id) {
             Module.demangleSymbol = UnityLoader[id]();
             UnityLoader.Error.handler(e, Module);
-          });
+          }, {isModularized: false});
         };        
         xhr.send();
       });
@@ -437,7 +437,7 @@ var UnityLoader = UnityLoader || {
       this.didShowErrorMessage = true;
       
     },
-    popup: function (gameInstance, message, callbacks) {
+    popup: function (unityInstance, message, callbacks) {
       callbacks = callbacks || [{text: "OK"}];
       var popup = document.createElement("div");
       popup.style.cssText = "position: absolute; top: 50%; left: 50%; -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%); text-align: center; border: 1px solid black; padding: 5px; background: #E8E8E8";
@@ -452,10 +452,10 @@ var UnityLoader = UnityLoader || {
         if (callbacks[i].callback)
           button.onclick = callbacks[i].callback;
         button.style.margin = "5px";
-        button.addEventListener("click", function () { gameInstance.container.removeChild(popup); })
+        button.addEventListener("click", function () { unityInstance.container.removeChild(popup); })
         popup.appendChild(button);
       }
-      gameInstance.container.appendChild(popup);
+      unityInstance.container.appendChild(popup);
       
     },
     
@@ -529,34 +529,34 @@ var UnityLoader = UnityLoader || {
         progressFullUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI0AAAASCAYAAABmbl0zAAAACXBIWXMAAAsSAAALEgHS3X78AAAAQElEQVRo3u3SMREAMAgAsVIpnTvj3xlogDmR8PfxftaBgSsBpsE0mAbTYBowDabBNJgG04BpMA2mwTSYBkzDXgP/hgGnr4PpeAAAAABJRU5ErkJggg==",
       },
     },
-    handler: function (gameInstance, progress) {
-      if (!gameInstance.Module)
+    handler: function (unityInstance, progress) {
+      if (!unityInstance.Module)
         return;
-      var style = UnityLoader.Progress.Styles[gameInstance.Module.splashScreenStyle];
-      var progressLogoUrl = gameInstance.Module.progressLogoUrl ? gameInstance.Module.resolveBuildUrl(gameInstance.Module.progressLogoUrl) : style.progressLogoUrl;
-      var progressEmptyUrl = gameInstance.Module.progressEmptyUrl ? gameInstance.Module.resolveBuildUrl(gameInstance.Module.progressEmptyUrl) : style.progressEmptyUrl;
-      var progressFullUrl = gameInstance.Module.progressFullUrl ? gameInstance.Module.resolveBuildUrl(gameInstance.Module.progressFullUrl) : style.progressFullUrl;      
+      var style = UnityLoader.Progress.Styles[unityInstance.Module.splashScreenStyle];
+      var progressLogoUrl = unityInstance.Module.progressLogoUrl ? unityInstance.Module.resolveBuildUrl(unityInstance.Module.progressLogoUrl) : style.progressLogoUrl;
+      var progressEmptyUrl = unityInstance.Module.progressEmptyUrl ? unityInstance.Module.resolveBuildUrl(unityInstance.Module.progressEmptyUrl) : style.progressEmptyUrl;
+      var progressFullUrl = unityInstance.Module.progressFullUrl ? unityInstance.Module.resolveBuildUrl(unityInstance.Module.progressFullUrl) : style.progressFullUrl;      
       var commonStyle = "position: absolute; left: 50%; top: 50%; -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%);";
-      if (!gameInstance.logo) {
-        gameInstance.logo = document.createElement("div");
-        gameInstance.logo.style.cssText = commonStyle + "background: url('" + progressLogoUrl + "') no-repeat center / contain; width: 154px; height: 130px;";
-        gameInstance.container.appendChild(gameInstance.logo);
+      if (!unityInstance.logo) {
+        unityInstance.logo = document.createElement("div");
+        unityInstance.logo.style.cssText = commonStyle + "background: url('" + progressLogoUrl + "') no-repeat center / contain; width: 154px; height: 130px;";
+        unityInstance.container.appendChild(unityInstance.logo);
       }
-      if (!gameInstance.progress) {        
-        gameInstance.progress = document.createElement("div");
-        gameInstance.progress.style.cssText = commonStyle + " height: 18px; width: 141px; margin-top: 90px;";
-        gameInstance.progress.empty = document.createElement("div");
-        gameInstance.progress.empty.style.cssText = "background: url('" + progressEmptyUrl + "') no-repeat right / cover; float: right; width: 100%; height: 100%; display: inline-block;";
-        gameInstance.progress.appendChild(gameInstance.progress.empty);
-        gameInstance.progress.full = document.createElement("div");
-        gameInstance.progress.full.style.cssText = "background: url('" + progressFullUrl + "') no-repeat left / cover; float: left; width: 0%; height: 100%; display: inline-block;";
-        gameInstance.progress.appendChild(gameInstance.progress.full);
-        gameInstance.container.appendChild(gameInstance.progress);
+      if (!unityInstance.progress) {        
+        unityInstance.progress = document.createElement("div");
+        unityInstance.progress.style.cssText = commonStyle + " height: 18px; width: 141px; margin-top: 90px;";
+        unityInstance.progress.empty = document.createElement("div");
+        unityInstance.progress.empty.style.cssText = "background: url('" + progressEmptyUrl + "') no-repeat right / cover; float: right; width: 100%; height: 100%; display: inline-block;";
+        unityInstance.progress.appendChild(unityInstance.progress.empty);
+        unityInstance.progress.full = document.createElement("div");
+        unityInstance.progress.full.style.cssText = "background: url('" + progressFullUrl + "') no-repeat left / cover; float: left; width: 0%; height: 100%; display: inline-block;";
+        unityInstance.progress.appendChild(unityInstance.progress.full);
+        unityInstance.container.appendChild(unityInstance.progress);
       }
-      gameInstance.progress.full.style.width = (100 * progress) + "%";
-      gameInstance.progress.empty.style.width = (100 * (1 - progress)) + "%";
+      unityInstance.progress.full.style.width = (100 * progress) + "%";
+      unityInstance.progress.empty.style.width = (100 * (1 - progress)) + "%";
       if (progress == 1)
-        gameInstance.logo.style.display = gameInstance.progress.style.display = "none";
+        unityInstance.logo.style.display = unityInstance.progress.style.display = "none";
 
     },
     update: function (Module, id, e) {
@@ -594,7 +594,7 @@ var UnityLoader = UnityLoader || {
         }
       }
       var totalProgress = started ? (started - unfinishedNonComputable - (total ? computable * (total - loaded) / total : 0)) / started : 0;
-      Module.gameInstance.onProgress(Module.gameInstance, 0.9 * totalProgress);
+      Module.unityInstance.onProgress(Module.unityInstance, 0.9 * totalProgress);
 
     },
 
@@ -765,34 +765,89 @@ var UnityLoader = UnityLoader || {
       })(),
       hasThreads: typeof SharedArrayBuffer !== 'undefined',
       hasWasm: typeof WebAssembly == "object" && typeof WebAssembly.validate == "function" && typeof WebAssembly.compile == "function",
+      hasWasmThreads: (function(){
+        if (typeof WebAssembly != "object") return false;
+        if (typeof SharedArrayBuffer === 'undefined') return false;
+
+        var wasmMemory = new WebAssembly.Memory({"initial": 1, "maximum": 1, "shared": true});
+        var isSharedArrayBuffer = wasmMemory.buffer instanceof SharedArrayBuffer;
+        delete wasmMemory;
+        return isSharedArrayBuffer;
+      })(),
     };
 
   })(),
-  compatibilityCheck: function (gameInstance, onsuccess, onerror) {
+  compatibilityCheck: function (unityInstance, onsuccess, onerror) {
     if (!UnityLoader.SystemInfo.hasWebGL) {
-      gameInstance.popup("Your browser does not support WebGL",
+      unityInstance.popup("Your browser does not support WebGL",
         [{text: "OK", callback: onerror}]);
     } else if (UnityLoader.SystemInfo.mobile) {
-      gameInstance.popup("Please note that Unity WebGL is not currently supported on mobiles. Press OK if you wish to continue anyway.",
+      unityInstance.popup("Please note that Unity WebGL is not currently supported on mobiles. Press OK if you wish to continue anyway.",
         [{text: "OK", callback: onsuccess}]);
     } else if (["Edge", "Firefox", "Chrome", "Safari"].indexOf(UnityLoader.SystemInfo.browser) == -1) {
-      gameInstance.popup("Please note that your browser is not currently supported for this Unity WebGL content. Press OK if you wish to continue anyway.",
+      unityInstance.popup("Please note that your browser is not currently supported for this Unity WebGL content. Press OK if you wish to continue anyway.",
         [{text: "OK", callback: onsuccess}]);
     } else {
       onsuccess();
     }
     
   },
+  buildCompatibilityCheck: function(Module, onsuccess, onerror) {
+
+    function supportsGraphicsApi() {
+      // old builds don't define a list of graphicsAPI's
+      if (typeof Module['graphicsAPI'] == 'undefined')
+        return true;
+
+      for(var i = 0; i < Module.graphicsAPI.length; i++) {
+        var api = Module.graphicsAPI[i];
+        if (api == "WebGL 2.0" && UnityLoader.SystemInfo.hasWebGL == 2) {
+          return true;
+        }
+        else if (api == "WebGL 1.0" && UnityLoader.SystemInfo.hasWebGL >= 1) {
+          return true;
+        }
+        else
+          Module.print("Warning: Unsupported graphics API " + api);
+      }
+      return false;
+    };
+
+    if (!supportsGraphicsApi()) {
+      onerror("Your browser does not support any of the required graphics API for this content.");
+    }
+    else if (!UnityLoader.SystemInfo.hasThreads && Module.multithreading) {
+      onerror("Your browser does not support multithreading.");
+    }
+    else {
+      onsuccess();
+    }
+  },
   Blobs: {},
-  loadCode: function (code, onload, info) {
+  loadCode: function (Module, code, onload, info) {
     var functionId = [].slice.call(UnityLoader.Cryptography.md5(code)).map(function(x) { return ("0" + x.toString(16)).substr(-2); }).join("");
     var script = document.createElement("script");
-    var blobUrl = URL.createObjectURL(new Blob(["UnityLoader[\"" + functionId + "\"]=", code], { type: "text/javascript" }));
+    var blob = ((info.isModularized) ? function(code) {
+      return new Blob([code], { type: "application/javascript" });
+    } : function (code, functionId) {
+      return new Blob(["UnityLoader[\"" + functionId + "\"]=", code], { type: "text/javascript" });
+    })(code, functionId);
+
+    var blobUrl = URL.createObjectURL(blob);
     UnityLoader.Blobs[blobUrl] = info;
+    Module.deinitializers.push(function() {
+      delete UnityLoader.Blobs[blobUrl];
+      delete UnityLoader[functionId];
+      document.body.removeChild(document.getElementById(functionId));
+    });
     script.src = blobUrl;
+    script.id = functionId;
     script.onload = function () {
-      URL.revokeObjectURL(blobUrl);
-      onload(functionId);
+      // For Development builds, we don't want to revokeObjectURLs() for script code, since that prevents browser debuggers from working.
+      // For Release builds, we should revokeObjectURL()s to free up memory
+      if (!Module.developmentBuild)
+        URL.revokeObjectURL(blobUrl);
+      onload(functionId, blob);
       delete script.onload;
     }
     document.body.appendChild(script);
@@ -811,7 +866,6 @@ var UnityLoader = UnityLoader || {
       var testRequest = idb.open("/idbfs-test");
       testRequest.onerror = function(e) { e.preventDefault(); setupIndexedDB(); }
       testRequest.onsuccess = function() { testRequest.result.close(); setupIndexedDB(idb); }
-      setTimeout(setupIndexedDB, 1000);
     } catch (e) {
       setupIndexedDB();
     }
@@ -824,30 +878,36 @@ var UnityLoader = UnityLoader || {
   },
   processWasmFrameworkJob: function (Module, job) {
     var code = UnityLoader.Job.result(Module, "downloadWasmFramework");
-    UnityLoader.loadCode(code, function (id) {
-      var blob = new Blob([code], { type: "application/javascript" });
+    UnityLoader.loadCode(Module, code, function (id, blob) {
       Module["mainScriptUrlOrBlob"] = blob;
+      if (Module.isModularized)
+          UnityLoader[id] = UnityModule;
       UnityLoader[id](Module);
       job.complete();
-    }, {Module: Module, url: Module["wasmFrameworkUrl"]});
+    }, {Module: Module, url: Module["wasmFrameworkUrl"], isModularized: Module.isModularized});
     
   },
   processAsmCodeJob: function (Module, job) {
     var asm = UnityLoader.Job.result(Module, "downloadAsmCode");
-    UnityLoader.loadCode(!Math.fround ? UnityLoader.Utils.optimizeMathFround(asm) : asm, function (id) {
-      Module.asm = UnityLoader[id];
+    UnityLoader.loadCode(Module, !Math.fround ? UnityLoader.Utils.optimizeMathFround(asm) : asm, function (id, blob) {
+      if (Module.isModularized)
+        Module["asmJsUrlOrBlob"] = blob;
+      else
+        Module.asm = UnityLoader[id]; // for backwards compatibility
       job.complete();
-    }, {Module: Module, url: Module["asmCodeUrl"]});
+    }, {Module: Module, url: Module["asmCodeUrl"], isModularized: Module.isModularized});
     
   },
   processAsmFrameworkJob: function (Module, job) {
     var code = UnityLoader.Job.result(Module, "downloadAsmFramework");
-    UnityLoader.loadCode(code, function (id) {
-      var blob = new Blob([code], { type: "application/javascript" });
-      Module["mainScriptUrlOrBlob"] = blob;
+    UnityLoader.loadCode(Module, code, function (id, blob) {
+      if (Module.isModularized) {
+        Module["mainScriptUrlOrBlob"] = blob;
+        UnityLoader[id] = UnityModule;
+      }
       UnityLoader[id](Module);
       job.complete();
-    }, {Module: Module, url: Module["asmFrameworkUrl"]});
+    }, {Module: Module, url: Module["asmFrameworkUrl"], isModularized: Module.isModularized});
     
   },
   processMemoryInitializerJob: function (Module, job) {
@@ -906,20 +966,29 @@ var UnityLoader = UnityLoader || {
     });
     
   },
-  loadModule: function (Module) {
+  loadModule: function (Module, onerror) {
     Module.useWasm = Module["wasmCodeUrl"] && UnityLoader.SystemInfo.hasWasm;
     
     if (Module.useWasm) {
-      UnityLoader.scheduleBuildDownloadJob(Module, "downloadWasmCode", "wasmCodeUrl");
-      UnityLoader.Job.schedule(Module, "processWasmCode", ["downloadWasmCode"], UnityLoader.processWasmCodeJob);
-      if (Module["wasmMemoryUrl"])
-      {
+
+      if (Module.multithreading && !UnityLoader.SystemInfo.hasWasmThreads) {
+        onerror("Your browser does not support WebAssembly Threads.");
+        return;
+      }
+
+      var processWasmFrameworkDepencencies = ["downloadWasmFramework", "setupIndexedDB"];
+      if (Module["wasmCodeUrl"].endsWith(".unityweb")) {
+        UnityLoader.scheduleBuildDownloadJob(Module, "downloadWasmCode", "wasmCodeUrl");
+        UnityLoader.Job.schedule(Module, "processWasmCode", ["downloadWasmCode"], UnityLoader.processWasmCodeJob);
+        processWasmFrameworkDepencencies.push("processWasmCode");
+      }
+      if (Module["wasmMemoryUrl"]) {
         UnityLoader.scheduleBuildDownloadJob(Module, "downloadMemoryInitializer", "wasmMemoryUrl");
         UnityLoader.Job.schedule(Module, "processMemoryInitializer", ["downloadMemoryInitializer"], UnityLoader.processMemoryInitializerJob);
         Module["memoryInitializerRequest"] = { addEventListener: function (type, callback) { Module["memoryInitializerRequest"].callback = callback; } }        
       }
       UnityLoader.scheduleBuildDownloadJob(Module, "downloadWasmFramework", "wasmFrameworkUrl");
-      UnityLoader.Job.schedule(Module, "processWasmFramework", ["downloadWasmFramework", "processWasmCode", "setupIndexedDB"], UnityLoader.processWasmFrameworkJob);
+      UnityLoader.Job.schedule(Module, "processWasmFramework", processWasmFrameworkDepencencies, UnityLoader.processWasmFrameworkJob);
 
     } else if (Module["asmCodeUrl"]) {
       UnityLoader.scheduleBuildDownloadJob(Module, "downloadAsmCode", "asmCodeUrl");
@@ -933,7 +1002,8 @@ var UnityLoader = UnityLoader || {
       UnityLoader.Job.schedule(Module, "processAsmFramework", ["downloadAsmFramework", "processAsmCode", "setupIndexedDB"], UnityLoader.processAsmFrameworkJob);
 
     } else {
-      throw "WebAssembly support is not detected in this browser.";
+        onerror("Your browser does not support WebAssembly.");
+        return;
     }
 
     UnityLoader.scheduleBuildDownloadJob(Module, "downloadData", "dataUrl");
@@ -946,7 +1016,17 @@ var UnityLoader = UnityLoader || {
     
   },
   instantiate: function (container, url, parameters) {
-    function instantiate(container, gameInstance) {
+
+    if (typeof parameters == "undefined") {
+      parameters = {};
+    }
+    if (typeof parameters.onerror == "undefined") {
+      parameters.onerror = function(message){
+        unityInstance.popup(message, [{text: "OK"}]);
+      }
+    }
+
+    function instantiate(container, unityInstance) {
       if (typeof container == "string" && !(container = document.getElementById(container)))
         return false;
 
@@ -954,66 +1034,76 @@ var UnityLoader = UnityLoader || {
       container.style.border = container.style.margin = container.style.padding = 0;
       if (getComputedStyle(container).getPropertyValue("position") == "static")
         container.style.position = "relative";
-      container.style.width = gameInstance.width || container.style.width;
-      container.style.height = gameInstance.height || container.style.height;
-      gameInstance.container = container;
+      container.style.width = unityInstance.width || container.style.width;
+      container.style.height = unityInstance.height || container.style.height;
+      unityInstance.container = container;
 
-      var Module = gameInstance.Module;
+      var Module = unityInstance.Module;
       Module.canvas = document.createElement("canvas");
       Module.canvas.style.width = "100%";
       Module.canvas.style.height = "100%";
       Module.canvas.addEventListener("contextmenu", function (e) { e.preventDefault() }),
+      Module.canvas.addEventListener("dragstart", function (e) { e.preventDefault() }),
       Module.canvas.id = "#canvas";
       container.appendChild(Module.canvas);
+      Module.deinitializers.push(function(){
+        container.removeChild(Module.canvas);
+      });
 
-      gameInstance.compatibilityCheck(gameInstance, function () {
+      var success = true;
+      unityInstance.compatibilityCheck(unityInstance, function () {
         var xhr = new XMLHttpRequest();
-        xhr.open("GET", gameInstance.url, true);
+        xhr.open("GET", unityInstance.url, true);
         xhr.responseType = "text";
         xhr.onerror = function() {
-          Module.print("Could not download " + gameInstance.url);
+          Module.print("Could not download " + unityInstance.url);
           if (document.URL.indexOf("file:") == 0) {
             alert ("It seems your browser does not support running Unity WebGL content from file:// urls. Please upload it to an http server, or try a different browser.");
           }   
         }
         xhr.onload = function () {
-          var parameters = JSON.parse(xhr.responseText);
-          for (var parameter in parameters) {
+          var jsonParameters = JSON.parse(xhr.responseText);
+          for (var parameter in jsonParameters) {
             if (typeof Module[parameter] == "undefined")
-              Module[parameter] = parameters[parameter];
+              Module[parameter] = jsonParameters[parameter];
           }
 
-          var graphicsApiMatch = false;
-          for(var i = 0; i < Module.graphicsAPI.length; i++) {
-            var api = Module.graphicsAPI[i];
-            if (api == "WebGL 2.0" && UnityLoader.SystemInfo.hasWebGL == 2) {
-                graphicsApiMatch = true;
-            }
-            else if (api == "WebGL 1.0" && UnityLoader.SystemInfo.hasWebGL >= 1) {
-                graphicsApiMatch = true;
-            }
-            else
-              Module.print("Warning: Unsupported graphics API " + api);
-          }
-          if (!graphicsApiMatch) {
-            gameInstance.popup("Your browser does not support any of the required graphics API for this content: " + Module.graphicsAPI, [{text: "OK"}]);
-            return;
+          if (Module.unityVersion) {
+            var versionMatch = Module.unityVersion.match(/(\d+)\.(\d+)\.(\d+)(.+)/);
+            if (versionMatch)
+              Module.unityVersion = {
+                "string" : Module.unityVersion,
+                "version" : parseInt(versionMatch[0]),
+                "major" : parseInt(versionMatch[1]),
+                "minor" : parseInt(versionMatch[2]),
+                "suffix" : versionMatch[3],
+              }
           }
 
-          container.style.background = Module.backgroundUrl ? "center/cover url('" + Module.resolveBuildUrl(Module.backgroundUrl) + "')" :
-            Module.backgroundColor ? " " + Module.backgroundColor : "";
+          Module.isModularized = Module.unityVersion && Module.unityVersion.version >= 2019;
 
-          // show loading screen as soon as possible
-          gameInstance.onProgress(gameInstance, 0.0);
+          // second compatibility check
+          UnityLoader.buildCompatibilityCheck(Module, function(){
 
-          UnityLoader.loadModule(Module);
+            container.style.background = Module.backgroundUrl ? "center/cover url('" + Module.resolveBuildUrl(Module.backgroundUrl) + "')" :
+              Module.backgroundColor ? " " + Module.backgroundColor : "";
+
+            // show loading screen as soon as possible
+            unityInstance.onProgress(unityInstance, 0.0);
+
+            success = UnityLoader.loadModule(Module, parameters.onerror);
+          }, parameters.onerror);
         }
         xhr.send();
       }, function () {
-        Module.printErr("Instantiation of the '" + url + "' terminated due to the failed compatibility check.");
+        var message = "Instantiation of '" + url + "' terminated due to the failed compatibility check.";
+        if (typeof parameters == "object" && typeof parameters.onerror == "function")
+          parameters.onerror(message);
+        else
+          Module.printErr(message);
       });
       
-      return true;
+      return success;
     }
     
     function resolveURL(url) {
@@ -1022,12 +1112,22 @@ var UnityLoader = UnityLoader || {
       return resolveURL.link.href;
     }
 
-    var gameInstance = {
+    var unityInstance = {
       url: url,
       onProgress: UnityLoader.Progress.handler,
       compatibilityCheck: UnityLoader.compatibilityCheck,
       Module: {
-        graphicsAPI: ["WebGL 2.0", "WebGL 1.0"],
+        deinitializers: [],
+        intervals: {}, // for internal tracking only
+        setInterval: function (func, ms) {
+          var id = window.setInterval(func, ms);
+          this.intervals[id] = true;
+          return id;
+        },
+        clearInterval: function(id) {
+          delete this.intervals[id];
+          window.clearInterval(id);
+        },
         onAbort: function(what){
           if (what !== undefined) {
             this.print(what);
@@ -1046,40 +1146,65 @@ var UnityLoader = UnityLoader || {
         buildDownloadProgress: {},
         resolveBuildUrl: function (buildUrl) { return buildUrl.match(/(http|https|ftp|file):\/\//) ? buildUrl : url.substring(0, url.lastIndexOf("/") + 1) + buildUrl; },
         streamingAssetsUrl: function () { return resolveURL(this.resolveBuildUrl("../StreamingAssets")) },
-        pthreadMainPrefixURL: "Build/",
+        locateFile: function(url) {
+          return "Build/".concat(url == "build.wasm" ? this.wasmCodeUrl : url);
+        },
       },
       SetFullscreen: function() {
-        if (gameInstance.Module.SetFullscreen)
-          return gameInstance.Module.SetFullscreen.apply(gameInstance.Module, arguments);
+        if (unityInstance.Module.SetFullscreen)
+          return unityInstance.Module.SetFullscreen.apply(unityInstance.Module, arguments);
       },
       SendMessage: function() {
-        if (gameInstance.Module.SendMessage)
-          return gameInstance.Module.SendMessage.apply(gameInstance.Module, arguments);
+        if (unityInstance.Module.SendMessage)
+          return unityInstance.Module.SendMessage.apply(unityInstance.Module, arguments);
+      },
+      Quit: function(onQuit) {
+        // asynchronously quit: signal the intention to quit to the native runtime, which then will call the user's defined onQuit() when completed
+        if (typeof onQuit == "function")
+          unityInstance.Module.onQuit = onQuit;
+        unityInstance.Module.shouldQuit = true;
       },
     };
 
-    gameInstance.Module.gameInstance = gameInstance;
-    gameInstance.popup = function (message, callbacks) { return UnityLoader.Error.popup(gameInstance, message, callbacks); };
-    gameInstance.Module.postRun.push(function() {
-      gameInstance.onProgress(gameInstance, 1);
+    unityInstance.Module.unityInstance = unityInstance;
+    unityInstance.popup = function (message, callbacks) { return UnityLoader.Error.popup(unityInstance, message, callbacks); };
+    unityInstance.Module.postRun.push(function() {
+      unityInstance.onProgress(unityInstance, 1);
+      if (typeof parameters == "object" && typeof parameters.onsuccess == "function")
+        parameters.onsuccess(unityInstance.Module);
     });
 
     for (var parameter in parameters) {
       if (parameter == "Module") {
         for (var moduleParameter in parameters[parameter])
-          gameInstance.Module[moduleParameter] = parameters[parameter][moduleParameter];
+          unityInstance.Module[moduleParameter] = parameters[parameter][moduleParameter];
       } else {
-        gameInstance[parameter] = parameters[parameter];
+        unityInstance[parameter] = parameters[parameter];
       }
     }
 
-    if (!instantiate(container, gameInstance))
-      document.addEventListener("DOMContentLoaded", function () { instantiate(container, gameInstance) });
+    if (!instantiate(container, unityInstance))
+      document.addEventListener("DOMContentLoaded", function () { instantiate(container, unityInstance) });
     
-    return gameInstance;
+    return unityInstance;
 
   },
-  Utils: {
+  instantiateAsync: function (container, url, parameters) {
+    return new Promise(function(resolve, reject) {
+      const parametersWithCallbacks = Object.assign({
+        onsuccess: function(instance) {
+          // on success
+          resolve(instance);
+        },
+        onerror: function(message) {
+          // on failure
+          reject(message);
+        }
+      }, parameters);
+
+      UnityLoader.instantiate(container, url, parametersWithCallbacks);
+    });
+  },  Utils: {
     assert: function (condition, text) {
       if (!condition)
         abort("Assertion failed: " + text);
@@ -1206,7 +1331,6 @@ var UnityLoader = UnityLoader || {
           }
         };
         openRequest.onerror = function () { initDatabase(null); };
-        setTimeout(openRequest.onerror, 1000);
       } catch (e) {
         initDatabase(null);
       }
