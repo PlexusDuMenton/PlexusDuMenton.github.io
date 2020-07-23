@@ -1504,7 +1504,7 @@ function _emscripten_asm_const_ii(code, a0) {
  return ASM_CONSTS[code](a0);
 }
 STATIC_BASE = GLOBAL_BASE;
-STATICTOP = STATIC_BASE + 3343792;
+STATICTOP = STATIC_BASE + 3344e3;
 __ATINIT__.push({
  func: (function() {
   __GLOBAL__sub_I_AccessibilityScriptingClasses_cpp();
@@ -3374,7 +3374,7 @@ __ATINIT__.push({
   ___emscripten_environ_constructor();
  })
 });
-var STATIC_BUMP = 3343792;
+var STATIC_BUMP = 3344e3;
 Module["STATIC_BASE"] = STATIC_BASE;
 Module["STATIC_BUMP"] = STATIC_BUMP;
 var tempDoublePtr = STATICTOP;
@@ -14125,6 +14125,55 @@ function _inet_addr(ptr) {
  }
  return addr;
 }
+function _initWebGLCopyAndPaste() {
+ window.addEventListener = (function(origFn) {
+  function noop() {}
+  const keys = {
+   "c": true,
+   "x": true,
+   "v": true
+  };
+  return (function(name, fn) {
+   const args = Array.prototype.slice.call(arguments);
+   if (name !== "keypress") {
+    return origFn.apply(this, args);
+   }
+   args[1] = (function(event) {
+    const hArgs = Array.prototype.slice.call(arguments);
+    if (keys[event.key.toLowerCase()] && (event.metaKey ? 1 : 0) + (event.ctrlKey ? 1 : 0) === 1) {
+     event.preventDefault = noop;
+    }
+    return fn.apply(this, hArgs);
+   });
+   return origFn.apply(this, args);
+  });
+ })(window.addEventListener);
+ _initWebGLCopyAndPaste = (function(objectNamePtr, cutCopyFuncNamePtr, pasteFuncNamePtr) {
+  window.becauseUnityIsBadWithJavascript_webglCopyAndPaste = window.becauseUnityIsBadWithJavascript_webglCopyAndPaste || {
+   initialized: false,
+   objectName: Pointer_stringify(objectNamePtr),
+   cutCopyFuncName: Pointer_stringify(cutCopyFuncNamePtr),
+   pasteFuncName: Pointer_stringify(pasteFuncNamePtr)
+  };
+  const g = window.becauseUnityIsBadWithJavascript_webglCopyAndPaste;
+  if (!g.initialized) {
+   window.addEventListener("cut", (function(e) {
+    e.preventDefault();
+    SendMessage(g.objectName, g.cutCopyFuncName, "x");
+    event.clipboardData.setData("text/plain", g.clipboardStr);
+   }));
+   window.addEventListener("copy", (function(e) {
+    e.preventDefault();
+    SendMessage(g.objectName, g.cutCopyFuncName, "c");
+    event.clipboardData.setData("text/plain", g.clipboardStr);
+   }));
+   window.addEventListener("paste", (function(e) {
+    const str = e.clipboardData.getData("text");
+    SendMessage(g.objectName, g.pasteFuncName, str);
+   }));
+  }
+ });
+}
 var _llvm_ceil_f32 = Math_ceil;
 var _llvm_ceil_f64 = Math_ceil;
 function _llvm_copysign_f64(x, y) {
@@ -14237,6 +14286,11 @@ function _mktime(tmPtr) {
  var yday = (date.getTime() - start.getTime()) / (1e3 * 60 * 60 * 24) | 0;
  HEAP32[tmPtr + 28 >> 2] = yday;
  return date.getTime() / 1e3 | 0;
+}
+function _passCopyToBrowser(stringPtr) {
+ const g = window.becauseUnityIsBadWithJavascript_webglCopyAndPaste;
+ const str = Pointer_stringify(stringPtr);
+ g.clipboardStr = str;
 }
 function _pthread_cond_destroy() {
  return 0;
@@ -14861,6 +14915,7 @@ Module["createContext"] = function Module_createContext(canvas, useWebGL, setInM
 JSEvents.staticInit();
 var GLctx;
 GL.init();
+_initWebGLCopyAndPaste();
 DYNAMICTOP_PTR = staticAlloc(4);
 STACK_BASE = STACKTOP = alignMemory(STATICTOP);
 STACK_MAX = STACK_BASE + TOTAL_STACK;
@@ -19976,6 +20031,7 @@ Module.asmLibraryArg = {
  "_gmtime": _gmtime,
  "_gmtime_r": _gmtime_r,
  "_inet_addr": _inet_addr,
+ "_initWebGLCopyAndPaste": _initWebGLCopyAndPaste,
  "_llvm_ceil_f32": _llvm_ceil_f32,
  "_llvm_ceil_f64": _llvm_ceil_f64,
  "_llvm_copysign_f64": _llvm_copysign_f64,
@@ -19999,6 +20055,7 @@ Module.asmLibraryArg = {
  "_localtime_r": _localtime_r,
  "_longjmp": _longjmp,
  "_mktime": _mktime,
+ "_passCopyToBrowser": _passCopyToBrowser,
  "_pthread_cond_destroy": _pthread_cond_destroy,
  "_pthread_cond_init": _pthread_cond_init,
  "_pthread_cond_timedwait": _pthread_cond_timedwait,
